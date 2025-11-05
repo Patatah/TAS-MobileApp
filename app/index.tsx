@@ -18,13 +18,12 @@ const SCREEN_OPTIONS = {
 export default function Screen() {
   const { colorScheme } = useColorScheme();
   const {recipes, loading, error} = useRecetas();
+  console.log(recipes)
   return (
     <>
       <Stack.Screen options={SCREEN_OPTIONS} />
       <View className="flex-1 items-center justify-center gap-8 p-4">
-      <Text>{recipes}</Text>
-      <Text>{loading}</Text>
-      <Text>{error}</Text>
+
       </View>
     </>
   );
