@@ -1,4 +1,3 @@
-import { Button } from '@/components/ui/button';
 import { Text } from '@/components/ui/text';
 import ThemeToggle from '@/components/ui/ThemeToggle';
 import { Stack } from 'expo-router';
@@ -13,45 +12,46 @@ const SCREEN_OPTIONS = {
 };
 
 type Receta = {
-  id: number;
-  folio: string;
+  idReceta: number;
+  nombre: string;
+  cedulaDoctor: string;
   estado: string;
-  sucursal: string;
-  fecha: string;
+  fechaLimiteRecogida: string;
+  fechaCancelacion?: string | null;
+  fechaCreacion: string;
+  sucursalNombre?: string;
 };
 
 const MOCK_RECETAS: Receta[] = [
   {
-    id: 1,
-    folio: 'R-001',
+    idReceta: 1,
+    nombre: 'Receta para dolor de cabeza',
+    cedulaDoctor: 'ABC123',
     estado: 'SURTIDA',
-    sucursal: 'Farmacia Centro',
-    fecha: '2025-11-20',
+    fechaLimiteRecogida: '2025-11-30',
+    fechaCancelacion: null,
+    fechaCreacion: '2025-11-20',
+    sucursalNombre: 'Farmacia Centro',
   },
   {
-    id: 2,
-    folio: 'R-002',
+    idReceta: 2,
+    nombre: 'Receta controlada',
+    cedulaDoctor: 'DEF456',
     estado: 'SURTIÉNDOSE',
-    sucursal: 'Farmacia Norte',
-    fecha: '2025-11-24',
-  },
-  {
-    id: 3,
-    folio: 'R-003',
-    estado: 'CANCELADA',
-    sucursal: 'Farmacia Sur',
-    fecha: '2025-11-25',
+    fechaLimiteRecogida: '2025-12-05',
+    fechaCancelacion: null,
+    fechaCreacion: '2025-11-25',
+    sucursalNombre: 'Farmacia Norte',
   },
 ];
 
-export default function Screen() {
+export default function MisRecetasScreen() {
   const { colorScheme } = useColorScheme();
 
   const renderItem = ({ item }: { item: Receta }) => (
     <View className="mb-3 rounded-2xl bg-white/95 p-4 shadow-sm dark:bg-zinc-900/95">
       <View className="mb-1 flex-row items-center justify-between">
-        <Text className="text-base font-semibold">Receta {item.folio}</Text>
-
+        <Text className="text-base font-semibold">{item.nombre}</Text>
         <View className="rounded-full bg-emerald-100 px-3 py-1 dark:bg-emerald-900/40">
           <Text className="text-[11px] font-medium text-emerald-700 dark:text-emerald-200">
             {item.estado}
@@ -59,13 +59,24 @@ export default function Screen() {
         </View>
       </View>
 
-      <Text className="text-sm text-zinc-600 dark:text-zinc-300">
-        Sucursal: <Text className="font-medium">{item.sucursal}</Text>
-      </Text>
+      {item.sucursalNombre && (
+        <Text className="text-sm text-zinc-600 dark:text-zinc-300">
+          Sucursal: <Text className="font-medium">{item.sucursalNombre}</Text>
+        </Text>
+      )}
 
       <Text className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-        Creada el {item.fecha}
+        Creada el {item.fechaCreacion}
       </Text>
+      <Text className="text-xs text-zinc-500 dark:text-zinc-400">
+        Límite de recogida: {item.fechaLimiteRecogida}
+      </Text>
+
+      {item.fechaCancelacion && (
+        <Text className="mt-1 text-xs text-red-500">
+          Cancelada el {item.fechaCancelacion}
+        </Text>
+      )}
     </View>
   );
 
@@ -83,7 +94,7 @@ export default function Screen() {
 
         <FlatList
           data={MOCK_RECETAS}
-          keyExtractor={(item) => item.id.toString()}
+          keyExtractor={(item) => item.idReceta.toString()}
           renderItem={renderItem}
           contentContainerStyle={{ paddingBottom: 24 }}
         />
