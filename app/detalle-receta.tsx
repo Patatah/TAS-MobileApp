@@ -1,4 +1,4 @@
-// app/detalle-receta.tsx
+import { Button } from '@/components/ui/button';
 import { Text } from '@/components/ui/text';
 import ThemeToggle from '@/components/ui/ThemeToggle';
 import { Stack, useLocalSearchParams } from 'expo-router';
@@ -29,6 +29,36 @@ type DetalleLinea = {
   cantidad: number;
 };
 
+const MOCK_RECETAS: Receta[] = [
+  {
+    idReceta: 1,
+    nombre: 'Receta para dolor de cabeza',
+    estado: 'SURTIDA',
+    fechaLimiteRecogida: '2025-11-30',
+    fechaCancelacion: null,
+    fechaCreacion: '2025-11-20',
+    sucursalNombre: 'Farmacia Centro',
+  },
+  {
+    idReceta: 2,
+    nombre: 'Receta controlada',
+    estado: 'SURTIÉNDOSE',
+    fechaLimiteRecogida: '2025-12-05',
+    fechaCancelacion: null,
+    fechaCreacion: '2025-11-25',
+    sucursalNombre: 'Farmacia Norte',
+  },
+  {
+    idReceta: 3,
+    nombre: 'Receta antibiótico',
+    estado: 'CANCELADA',
+    fechaLimiteRecogida: '2025-11-10',
+    fechaCancelacion: '2025-11-09',
+    fechaCreacion: '2025-11-05',
+    sucursalNombre: 'Farmacia Sur',
+  },
+];
+
 const MOCK_DETALLES: DetalleLinea[] = [
   {
     idLinea: 1,
@@ -46,25 +76,22 @@ const MOCK_DETALLES: DetalleLinea[] = [
 
 export default function DetalleRecetaScreen() {
   const { colorScheme } = useColorScheme();
+  const isDark = colorScheme === 'dark';
   const params = useLocalSearchParams<{
-    idReceta?: string;
-    nombre?: string;
-    estado?: string;
-    fechaCreacion?: string;
-    fechaLimiteRecogida?: string;
-    fechaCancelacion?: string;
-    sucursalNombre?: string;
+    index?: string;
   }>();
 
-  const receta: Receta = {
-    idReceta: Number(params.idReceta ?? 0),
-    nombre: params.nombre ?? 'Receta',
-    estado: params.estado ?? 'SIN ESTADO',
-    fechaCreacion: params.fechaCreacion ?? '',
-    fechaLimiteRecogida: params.fechaLimiteRecogida ?? '',
-    fechaCancelacion: params.fechaCancelacion || null,
-    sucursalNombre: params.sucursalNombre || undefined,
-  };
+  const initialIndex = React.useMemo(() => {
+    const parsed = Number(params.index ?? 0);
+    if (Number.isNaN(parsed)) return 0;
+    if (parsed < 0) return 0;
+    if (parsed >= MOCK_RECETAS.length) return MOCK_RECETAS.length - 1;
+    return parsed;
+  }, [params.index]);
+
+  const [currentIndex, setCurrentIndex] = React.useState(initialIndex);
+
+  const receta = MOCK_RECETAS[currentIndex];
 
   const renderDetalle = ({ item }: { item: DetalleLinea }) => (
     <View className="mb-2 rounded-xl bg-white/95 p-3 shadow-sm dark:bg-zinc-900/95">
@@ -77,6 +104,19 @@ export default function DetalleRecetaScreen() {
       </Text>
     </View>
   );
+
+  const canGoPrev = currentIndex > 0;
+  const canGoNext = currentIndex < MOCK_RECETAS.length - 1;
+
+  const handlePrev = () => {
+    if (!canGoPrev) return;
+    setCurrentIndex((prev) => prev - 1);
+  };
+
+  const handleNext = () => {
+    if (!canGoNext) return;
+    setCurrentIndex((prev) => prev + 1);
+  };
 
   return (
     <>
@@ -118,8 +158,39 @@ export default function DetalleRecetaScreen() {
           data={MOCK_DETALLES}
           keyExtractor={(item) => item.idLinea.toString()}
           renderItem={renderDetalle}
-          contentContainerStyle={{ paddingBottom: 24 }}
+          contentContainerStyle={{ paddingBottom: 16 }}
         />
+
+        <View className="mt-4 flex-row justify-between gap-3">
+          <Button
+            className="flex-1 rounded-2xl"
+            disabled={!canGoPrev}
+            onPress={handlePrev}
+          >
+            <Text
+              className={
+                'text-center text-sm font-medium ' +
+                (isDark ? 'text-zinc-900' : 'text-white')
+              }
+            >
+              Anterior
+            </Text>
+          </Button>
+          <Button
+            className="flex-1 rounded-2xl"
+            disabled={!canGoNext}
+            onPress={handleNext}
+          >
+            <Text
+              className={
+                'text-center text-sm font-medium ' +
+                (isDark ? 'text-zinc-900' : 'text-white')
+              }
+            >
+              Siguiente
+            </Text>
+          </Button>
+        </View>
       </View>
     </>
   );
