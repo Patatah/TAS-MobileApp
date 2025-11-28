@@ -1,9 +1,9 @@
 import { Text } from '@/components/ui/text';
 import ThemeToggle from '@/components/ui/ThemeToggle';
-import { Stack } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import { useColorScheme } from 'nativewind';
 import * as React from 'react';
-import { View, FlatList } from 'react-native';
+import { View, FlatList, TouchableOpacity } from 'react-native';
 
 const SCREEN_OPTIONS = {
   title: 'Te Acerco Salud',
@@ -47,9 +47,28 @@ const MOCK_RECETAS: Receta[] = [
 
 export default function MisRecetasScreen() {
   const { colorScheme } = useColorScheme();
+  const router = useRouter();
+
+  const handlePressReceta = (item: Receta) => {
+    router.push({
+      pathname: '/detalle-receta',
+      params: {
+        idReceta: item.idReceta.toString(),
+        nombre: item.nombre,
+        estado: item.estado,
+        fechaCreacion: item.fechaCreacion,
+        fechaLimiteRecogida: item.fechaLimiteRecogida,
+        fechaCancelacion: item.fechaCancelacion ?? '',
+        sucursalNombre: item.sucursalNombre ?? '',
+      },
+    });
+  };
 
   const renderItem = ({ item }: { item: Receta }) => (
-    <View className="mb-3 rounded-2xl bg-white/95 p-4 shadow-sm dark:bg-zinc-900/95">
+    <TouchableOpacity
+      className="mb-3 rounded-2xl bg-white/95 p-4 shadow-sm dark:bg-zinc-900/95"
+      onPress={() => handlePressReceta(item)}
+    >
       <View className="mb-1 flex-row items-center justify-between">
         <Text className="text-base font-semibold">{item.nombre}</Text>
         <View className="rounded-full bg-emerald-100 px-3 py-1 dark:bg-emerald-900/40">
@@ -61,7 +80,8 @@ export default function MisRecetasScreen() {
 
       {item.sucursalNombre && (
         <Text className="text-sm text-zinc-600 dark:text-zinc-300">
-          Sucursal: <Text className="font-medium">{item.sucursalNombre}</Text>
+          Sucursal:{' '}
+          <Text className="font-medium">{item.sucursalNombre}</Text>
         </Text>
       )}
 
@@ -77,7 +97,7 @@ export default function MisRecetasScreen() {
           Cancelada el {item.fechaCancelacion}
         </Text>
       )}
-    </View>
+    </TouchableOpacity>
   );
 
   return (
@@ -86,7 +106,7 @@ export default function MisRecetasScreen() {
 
       <View className="flex-1 bg-zinc-50 px-4 pb-6 pt-24 dark:bg-black">
         <Text className="mb-1 text-2xl font-semibold">
-        <Text className="text-2xl"> Mis recetas</Text>
+        <Text className="text-2xl">Mis recetas </Text>
         </Text>
         <Text className="mb-4 text-sm text-zinc-600 dark:text-zinc-300">
           Consulta el estado de tus recetas

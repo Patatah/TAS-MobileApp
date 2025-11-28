@@ -8,13 +8,12 @@ import * as React from 'react';
 import { View, TextInput } from 'react-native';
 
 const SCREEN_OPTIONS = {
-  title: 'Iniciar sesión',
-  headerTransparent: true,
-  headerRight: () => <ThemeToggle />,
+  headerShown: false,
 };
 
 export default function LoginScreen() {
   const { colorScheme } = useColorScheme();
+  const isDark = colorScheme === 'dark';
   const router = useRouter();
 
   const [email, setEmail] = React.useState('');
@@ -27,8 +26,6 @@ export default function LoginScreen() {
       return;
     }
 
-    // Aquí luego conectamos con el backend (otro commit).
-    // Por ahora solo navegamos a Mis recetas.
     setError(null);
     router.replace('/mis-recetas');
   };
@@ -37,44 +34,73 @@ export default function LoginScreen() {
     <>
       <Stack.Screen options={SCREEN_OPTIONS} />
 
-      <View className="flex-1 bg-zinc-50 px-4 pt-24 dark:bg-black">
-        <Text className="mb-2 text-2xl font-semibold">Te Acerco Salud</Text>
-        <Text className="mb-8 text-sm text-zinc-600 dark:text-zinc-300">
-          Inicia sesión para ver tus recetas
-        </Text>
+      <View className="flex-1 bg-zinc-50 px-6 pt-14 pb-10 dark:bg-black">
+        <View className="mb-10 flex-row items-center justify-between">
+          <View>
+            <Text className="text-[26px] font-semibold tracking-tight">
+              Te Acerco Salud
+            </Text>
+            <Text className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
+              Organiza tus recetas en un solo lugar
+            </Text>
+          </View>
 
-        <View className="mb-4 gap-2">
-          <Text className="text-sm font-medium">Correo electrónico</Text>
-          <TextInput
-            value={email}
-            onChangeText={setEmail}
-            autoCapitalize="none"
-            keyboardType="email-address"
-            className="rounded-xl border border-zinc-300 bg-white px-3 py-2 text-base dark:border-zinc-700 dark:bg-zinc-900 dark:text-white"
-            placeholder="paciente@ejemplo.com"
-          />
+          <ThemeToggle />
         </View>
-
-        <View className="mb-4 gap-2">
-          <Text className="text-sm font-medium">Contraseña</Text>
-          <TextInput
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-            className="rounded-xl border border-zinc-300 bg-white px-3 py-2 text-base dark:border-zinc-700 dark:bg-zinc-900 dark:text-white"
-            placeholder="••••••••"
-          />
-        </View>
-
-        {error && (
-          <Text className="mb-3 text-sm text-red-500">
-            {error}
+        <View className="rounded-3xl bg-white/95 p-5 shadow-lg shadow-zinc-300/40 dark:bg-zinc-900/95 dark:shadow-black/60">
+          <Text className="mb-4 text-sm text-zinc-600 dark:text-zinc-300">
+            Inicia sesión para ver tus recetas
           </Text>
-        )}
 
-        <Button className="mt-2 w-full" onPress={handleLogin}>
-          <Text className="font-medium text-white">Iniciar sesión</Text>
-        </Button>
+          <View className="mb-4 gap-1.5">
+            <Text className="text-xs font-medium text-zinc-700 dark:text-zinc-200">
+              Correo electrónico
+            </Text>
+            <TextInput
+              value={email}
+              onChangeText={setEmail}
+              autoCapitalize="none"
+              keyboardType="email-address"
+              className="rounded-2xl border border-zinc-200 bg-white px-3 py-2.5 text-sm text-zinc-900 shadow-sm dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100"
+              placeholderTextColor={isDark ? '#71717A' : '#A1A1AA'}
+            />
+          </View>
+
+          <View className="mb-2 gap-1.5">
+            <Text className="text-xs font-medium text-zinc-700 dark:text-zinc-200">
+              Contraseña
+            </Text>
+            <TextInput
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+              className="rounded-2xl border border-zinc-200 bg-white px-3 py-2.5 text-sm text-zinc-900 shadow-sm dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100"
+              placeholder="••••••••"
+              placeholderTextColor={isDark ? '#71717A' : '#A1A1AA'}
+            />
+          </View>
+
+          {error && (
+            <Text className="mb-2 text-xs text-red-500">
+              {error}
+            </Text>
+          )}
+
+          <Button className="mt-3 w-full rounded-2xl" onPress={handleLogin}>
+            <Text
+              className={
+                'text-sm font-medium ' +
+                (isDark ? 'text-zinc-900' : 'text-white')
+              }
+            >
+              Iniciar sesión
+            </Text>
+          </Button>
+
+          <Text className="mt-3 text-[10px] text-zinc-400 dark:text-zinc-500">
+            Tus datos se usan solo para gestionar tus recetas en TAS.
+          </Text>
+        </View>
       </View>
     </>
   );
