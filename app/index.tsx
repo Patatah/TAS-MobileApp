@@ -2,10 +2,11 @@
 import { Button } from '@/components/ui/button';
 import { Text } from '@/components/ui/text';
 import ThemeToggle from '@/components/ui/ThemeToggle';
+import { useAuth } from '@/hooks/UseAuth';
 import { Stack, useRouter } from 'expo-router';
 import { useColorScheme } from 'nativewind';
 import * as React from 'react';
-import { View, TextInput } from 'react-native';
+import { View, TextInput, ActivityIndicator } from 'react-native';
 
 const SCREEN_OPTIONS = {
   headerShown: false,
@@ -15,19 +16,16 @@ export default function LoginScreen() {
   const { colorScheme } = useColorScheme();
   const isDark = colorScheme === 'dark';
   const router = useRouter();
+  const { login, loading, error } = useAuth();
 
   const [email, setEmail] = React.useState('');
   const [password, setPassword] = React.useState('');
-  const [error, setError] = React.useState<string | null>(null);
 
-  const handleLogin = () => {
-    if (!email || !password) {
-      setError('Ingresa correo y contraseña');
-      return;
+  const handleLogin = async () => {
+    const success = await login({ email, password });
+    if (success) {
+      router.replace('/mis-recetas');
     }
-
-    setError(null);
-    router.replace('/mis-recetas');
   };
 
   return (
