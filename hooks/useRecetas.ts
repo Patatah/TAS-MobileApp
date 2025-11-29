@@ -9,13 +9,12 @@ export function useRecetas() {
 
   useEffect(() => {
     setLoading(true);
-    fetch(`${process.env.EXPO_PUBLIC_API_URL}/medicamentos`)
+    fetch(`${process.env.EXPO_PUBLIC_API_URL}/recetas/medicamentos`)
       .then((res) => {
-        console.log(res.status)
         if (!res.ok) throw new Error('Network response was not ok');
         return res.json();
       })
-      .then((data) => setRecipes(data))
+      .then((data) => setRecipes(data.data))
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
   }, []);
