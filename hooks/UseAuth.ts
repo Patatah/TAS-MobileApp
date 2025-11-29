@@ -51,36 +51,13 @@ export function useAuth() {
       });
 
       const data = await response.json();
-      console.log('Response data:', data);
 
       if (!response.ok) {
-        let errorMessage = 'Ocurrió un error inesperado.';
-        
-        // Traducciones de mensajes comunes
-        const translations: Record<string, string> = {
-          'The email field must be a valid email address.': 'Debes ingresar un correo electrónico válido.',
-          'The provided credentials are incorrect.': 'Las credenciales proporcionadas son incorrectas.',
-          'These credentials do not match our records.': 'Estas credenciales no coinciden con nuestros registros.',
-        };
-
-        // Verificar diferentes estructuras de error
-        if (data.errors) {
-          if (data.errors.email) {
-            const emailError = Array.isArray(data.errors.email) 
-              ? data.errors.email[0] 
-              : data.errors.email;
-            errorMessage = translations[emailError] || emailError;
-          } else if (data.errors.password) {
-            const passwordError = Array.isArray(data.errors.password)
-              ? data.errors.password[0]
-              : data.errors.password;
-            errorMessage = passwordError;
-          }
-        } else if (data.message) {
-          errorMessage = translations[data.message] || data.message;
+        if (data.errors && data.errors.email) {
+          setError(data.errors.email[0]);
+        } else {
+          setError(data.message || 'Ocurrió un error inesperado.');
         }
-
-        setError(errorMessage);
         setLoading(false);
         return false;
       }
