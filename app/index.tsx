@@ -7,6 +7,7 @@ import { Stack, useRouter } from 'expo-router';
 import { useColorScheme } from 'nativewind';
 import * as React from 'react';
 import { View, TextInput, ActivityIndicator } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const SCREEN_OPTIONS = {
   headerShown: false,
@@ -48,9 +49,9 @@ export default function LoginScreen() {
       </View>
     );
   };
-
+      const insets = useSafeAreaInsets();
   return (
-    <>
+    <View style={{ flex: 1, paddingTop: insets.top, paddingBottom: insets.bottom }}>
       <Stack.Screen options={SCREEN_OPTIONS} />
 
       <View className="flex-1 bg-zinc-50 px-6 pt-14 pb-10 dark:bg-black">
@@ -131,6 +132,6 @@ export default function LoginScreen() {
         </View>
       
       </View>
-    </>
+    </View>
   );
 }

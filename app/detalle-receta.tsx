@@ -5,15 +5,14 @@ import { Receta } from '@/hooks/tipos';
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { useColorScheme } from 'nativewind';
 import * as React from 'react';
-import { View, FlatList } from 'react-native';
+import { View, FlatList, SafeAreaView } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const SCREEN_OPTIONS = {
   title: 'Detalle de receta',
   headerTransparent: true,
   headerRight: () => <ThemeToggle />,
 };
-
-
 
 export default function DetalleRecetaScreen() {
   const { colorScheme } = useColorScheme();
@@ -94,9 +93,10 @@ export default function DetalleRecetaScreen() {
     setCurrentIndex((prev) => prev + 1);
   };
 
+  const insets = useSafeAreaInsets();
   return (
-    <>
-      <Stack.Screen options={SCREEN_OPTIONS} />
+    <View style={{ flex: 1, paddingTop: insets.top, paddingBottom: insets.bottom }}>
+      <Stack.Screen options={SCREEN_OPTIONS}/>
 
       <View className="flex-1 bg-zinc-50 px-4 pb-6 pt-24 dark:bg-black">
         <View className="mb-4 rounded-2xl bg-white/95 p-4 shadow-sm dark:bg-zinc-900/95">
@@ -200,6 +200,6 @@ export default function DetalleRecetaScreen() {
           </Button>
         </View>
       </View>
-    </>
+    </View>
   );
 }

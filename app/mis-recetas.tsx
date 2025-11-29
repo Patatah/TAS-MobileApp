@@ -16,6 +16,7 @@ import {
   RefreshControl,
 } from 'react-native';
 import { useMemo } from 'react';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const getColorEstado = (estado: string) => {
   switch (estado) {
@@ -163,9 +164,9 @@ export default function MisRecetasScreen() {
       return nombre.includes(term) || estado.includes(term) || sucursal.includes(term);
     });
   }, [search, recetas]);
-
+    const insets = useSafeAreaInsets();
   return (
-    <>
+    <View style={{ flex: 1, paddingTop: insets.top, paddingBottom: insets.bottom }}>
       <Stack.Screen
         options={{
           title: 'Te Acerco Salud',
@@ -257,6 +258,6 @@ export default function MisRecetasScreen() {
           </Text>
         </Button>
       </View>
-    </>
+    </View>
   );
 }
