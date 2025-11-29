@@ -3,7 +3,7 @@ import { Text } from '@/components/ui/text';
 import ThemeToggle from '@/components/ui/ThemeToggle';
 import { useAuth } from '@/hooks/UseAuth';
 import { useRecetas } from '@/hooks/useRecetas';
-import { Receta } from '@/hooks/tipos';
+import { EstadoPedido, Receta } from '@/hooks/tipos';
 import { Stack, useRouter } from 'expo-router';
 import { useColorScheme } from 'nativewind';
 import * as React from 'react';
@@ -15,11 +15,40 @@ import {
   ActivityIndicator,
   RefreshControl,
 } from 'react-native';
+import { useMemo } from 'react';
 
-
+const getColorEstado = (estado: string) => {
+  switch (estado) {
+    case EstadoPedido.Preparacion:
+      return {
+        bg: 'bg-yellow-100 dark:bg-yellow-900/40',
+        text: 'text-yellow-700 dark:text-yellow-200',
+      };
+    case EstadoPedido.Listo:
+      return {
+        bg: 'bg-emerald-100 dark:bg-emerald-900/40',
+        text: 'text-emerald-700 dark:text-emerald-200',
+      };
+    case EstadoPedido.Cancelado:
+      return {
+        bg: 'bg-rose-100 dark:bg-rose-900/40',
+        text: 'text-rose-700 dark:text-rose-200',
+      };
+    case EstadoPedido.Entregado:
+      return {
+        bg: 'bg-sky-100 dark:bg-sky-900/40',
+        text: 'text-sky-700 dark:text-sky-200',
+      };
+    default:
+      return {
+        bg: 'bg-slate-100 dark:bg-slate-800',
+        text: 'text-slate-700 dark:text-slate-200',
+      };
+  }
+};
 
 export default function MisRecetasScreen() {
-  const {logout} = useAuth();
+  const { logout } = useAuth();
   const { colorScheme } = useColorScheme();
   const isDark = colorScheme === 'dark';
   const router = useRouter();
@@ -27,7 +56,7 @@ export default function MisRecetasScreen() {
   const [search, setSearch] = React.useState('');
   const [fontScale, setFontScale] = React.useState(1);
 
-  const { recetas, refetch, loading, error} = useRecetas();
+  const { recetas, refetch, loading, error } = useRecetas();
 
   const handleIncreaseFont = () => {
     setFontScale((prev) => {
@@ -42,12 +71,7 @@ export default function MisRecetasScreen() {
       pathname: '/detalle-receta',
       params: {
         index: index.toString(),
-        idReceta: item.idReceta?.toString() ?? '',
-        nombre: item.nombre ?? 'Sin nombre',
-        estado: item.estado ?? 'DESCONOCIDO',
-        fechaLimiteRecogida: item.fechaLimiteRecogida?.toString() ?? '',
-        fechaCancelacion: item.fechaCancelacion?.toString() ?? '',
-        sucursalNombre: item.sucursalRecogida?.nombre ?? '',
+        recetas: JSON.stringify(recetas)
       },
     });
   };
@@ -67,53 +91,51 @@ export default function MisRecetasScreen() {
     return (
       <TouchableOpacity
         className="mb-3 rounded-2xl bg-white/95 p-4 shadow-sm dark:bg-zinc-900/95"
-        onPress={() => handlePressReceta(item, index)}
-      >
+        onPress={() => handlePressReceta(item, index)}>
         <View className="mb-1 flex-row items-center justify-between">
-          <Text
-            className="flex-1 font-semibold"
-            style={{ fontSize: 16 * fontScale }}
-          >
-            {item.nombre || `Receta #${item.idReceta}`}
+          <Text className="flex-1 font-semibold" style={{ fontSize: 16 * fontScale }}>
+            {item.nombre}
           </Text>
-          {item.estado && (
-            <View className="rounded-full bg-emerald-100 px-3 py-1 dark:bg-emerald-900/40">
-              <Text
-                className="font-medium text-emerald-700 dark:text-emerald-200"
-                style={{ fontSize: 11 * fontScale }}
-              >
-                {item.estado}
-              </Text>
-            </View>
-          )}
+          {item.estado &&
+            (() => {
+              const { bg, text } = getColorEstado(item.estado);
+
+              return (
+                <View className={`rounded-full px-3 py-1 ${bg}`}>
+                  <Text className={`font-medium ${text}`} style={{ fontSize: 11 * fontScale }}>
+                    {item.estado}
+                  </Text>
+                </View>
+              );
+            })()}
         </View>
 
         {item.sucursalRecogida && (
-          <Text
-            className="text-zinc-600 dark:text-zinc-300"
-            style={{ fontSize: 14 * fontScale }}
-          >
-            Sucursal:{' '}
-            <Text className="font-medium" style={{ fontSize: 14 * fontScale }}>
-              {item.sucursalRecogida.nombre}
+          <View className="text-zinc-600 dark:text-zinc-300">
+            <Text style={{ fontSize: 14 * fontScale }}>
+              Sucursal: <Text className="font-medium">{item.sucursalRecogida.nombre}</Text>
             </Text>
-          </Text>
+
+            <Text style={{ fontSize: 14 * fontScale }}>
+              Dirección: <Text className="font-medium">{item.sucursalRecogida.direccion}</Text>
+            </Text>
+
+            <Text style={{ fontSize: 14 * fontScale }}>
+              Teléfono: <Text className="font-medium">{item.sucursalRecogida.telefono}</Text>
+            </Text>
+          </View>
         )}
 
-        {item.fechaLimiteRecogida && (
+        {item.fechaLimiteRecogida && item.estado!==EstadoPedido.Entregado && (
           <Text
-            className="mt-1 text-zinc-500 dark:text-zinc-400"
-            style={{ fontSize: 12 * fontScale }}
-          >
-            Límite de recogida: {formatDate(item.fechaLimiteRecogida)}
+            className="mt-1 bg-emerald-50 rounded-2xl text-zinc-500 dark:text-zinc-400"
+            style={{ fontSize: 14 * fontScale }}>
+              Límite de recogida: {formatDate(item.fechaLimiteRecogida)}
           </Text>
         )}
 
         {item.fechaCancelacion && (
-          <Text
-            className="mt-1 text-red-500"
-            style={{ fontSize: 12 * fontScale }}
-          >
+          <Text className="mt-1 text-red-500" style={{ fontSize: 12 * fontScale }}>
             Cancelada el {formatDate(item.fechaCancelacion)}
           </Text>
         )}
@@ -121,8 +143,7 @@ export default function MisRecetasScreen() {
         {item.pago && (
           <Text
             className="mt-1 text-zinc-600 dark:text-zinc-300"
-            style={{ fontSize: 12 * fontScale }}
-          >
+            style={{ fontSize: 12 * fontScale }}>
             Monto: ${item.pago.monto.toFixed(2)}
           </Text>
         )}
@@ -130,7 +151,7 @@ export default function MisRecetasScreen() {
     );
   };
 
-  const filteredRecetas = React.useMemo(() => {
+  const filteredRecetas = useMemo(() => {
     const term = search.trim().toLowerCase();
     if (!term) return recetas;
 
@@ -139,11 +160,7 @@ export default function MisRecetasScreen() {
       const estado = (r.estado ?? '').toLowerCase();
       const sucursal = (r.sucursalRecogida?.nombre ?? '').toLowerCase();
 
-      return (
-        nombre.includes(term) ||
-        estado.includes(term) ||
-        sucursal.includes(term)
-      );
+      return nombre.includes(term) || estado.includes(term) || sucursal.includes(term);
     });
   }, [search, recetas]);
 
@@ -157,15 +174,13 @@ export default function MisRecetasScreen() {
             <View className="flex-row items-center gap-2 pr-2">
               <TouchableOpacity
                 onPress={handleIncreaseFont}
-                className="rounded-full border border-zinc-300 px-3 py-1 dark:border-zinc-700"
-              >
+                className="rounded-full border border-zinc-300 px-3 py-1 dark:border-zinc-700">
                 <Text
                   className="font-semibold"
                   style={{
                     fontSize: 12 * fontScale,
                     color: isDark ? '#e5e7eb' : '#3f3f46',
-                  }}
-                >
+                  }}>
                   Aa
                 </Text>
               </TouchableOpacity>
@@ -177,20 +192,14 @@ export default function MisRecetasScreen() {
 
       <View className="flex-1 bg-zinc-50 px-4 pb-6 pt-24 dark:bg-black">
         <View className="flex-1">
-          <Text
-            className="mb-1 font-semibold"
-            style={{ fontSize: 20 * fontScale }}
-          >
+          <Text className="mb-1 font-semibold" style={{ fontSize: 20 * fontScale }}>
             Mis recetas
           </Text>
-          <Text
-            className="text-zinc-600 dark:text-zinc-300"
-            style={{ fontSize: 14 * fontScale }}
-          >
+          <Text className="text-zinc-600 dark:text-zinc-300" style={{ fontSize: 14 * fontScale }}>
             Consulta el estado de tus recetas
           </Text>
 
-          <View className="mt-4 mb-4 flex-row items-center rounded-2xl border border-zinc-200 bg-white px-3 py-2 dark:border-zinc-700 dark:bg-zinc-900">
+          <View className="mb-4 mt-4 flex-row items-center rounded-2xl border border-zinc-200 bg-white px-3 py-2 dark:border-zinc-700 dark:bg-zinc-900">
             <TextInput
               value={search}
               onChangeText={setSearch}
@@ -204,7 +213,9 @@ export default function MisRecetasScreen() {
           {loading ? (
             <View className="flex-1 items-center justify-center">
               <ActivityIndicator size="large" color={isDark ? '#e5e7eb' : '#3f3f46'} />
-              <Text className="mt-2 text-zinc-500 dark:text-zinc-400" style={{ fontSize: 14 * fontScale }}>
+              <Text
+                className="mt-2 text-zinc-500 dark:text-zinc-400"
+                style={{ fontSize: 14 * fontScale }}>
                 Cargando recetas...
               </Text>
             </View>
@@ -216,7 +227,9 @@ export default function MisRecetasScreen() {
             </View>
           ) : filteredRecetas.length === 0 ? (
             <View className="flex-1 items-center justify-center">
-              <Text className="text-zinc-500 dark:text-zinc-400" style={{ fontSize: 14 * fontScale }}>
+              <Text
+                className="text-zinc-500 dark:text-zinc-400"
+                style={{ fontSize: 14 * fontScale }}>
                 No se encontraron recetas
               </Text>
             </View>
@@ -232,19 +245,14 @@ export default function MisRecetasScreen() {
         </View>
 
         <Button
-          className={
-            'mt-4 w-full rounded-2xl ' +
-            (isDark ? 'bg-white' : 'bg-black')
-          }
-          onPress={handleCerrarSesion}
-        >
+          className={'mt-4 w-full rounded-2xl ' + (isDark ? 'bg-white' : 'bg-black')}
+          onPress={handleCerrarSesion}>
           <Text
             className="text-center text-sm font-medium"
             style={{
               fontSize: 14 * fontScale,
               color: isDark ? '#000000' : '#ffffff',
-            }}
-          >
+            }}>
             Cerrar sesión
           </Text>
         </Button>

@@ -8,6 +8,13 @@ export type Sucursal = {
    telefono?: string;
 };
 
+export enum EstadoPedido {
+   Preparacion = "En preparación",
+   Listo = "Listo para recoger",
+   Cancelado = "Pedido cancelado",
+   Entregado = "Entregado",
+ };
+
 export interface User {
    id: number;
    name: string;
@@ -36,7 +43,7 @@ export type Receta = {
    nombre?: string; 
    idReceta?: number;
    cedulaDoctor?: string;
-   estado?: string;
+   estado?: EstadoPedido;
    UsuarioCreador?: User;
    pago?: Pago;
    fechaLimiteRecogida?: string | Date;

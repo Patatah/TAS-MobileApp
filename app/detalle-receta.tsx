@@ -1,6 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { Text } from '@/components/ui/text';
 import ThemeToggle from '@/components/ui/ThemeToggle';
+import { Receta } from '@/hooks/tipos';
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { useColorScheme } from 'nativewind';
 import * as React from 'react';
@@ -12,101 +13,76 @@ const SCREEN_OPTIONS = {
   headerRight: () => <ThemeToggle />,
 };
 
-type Receta = {
-  idReceta: number;
-  nombre: string;
-  estado: string;
-  fechaCreacion: string;
-  fechaLimiteRecogida: string;
-  fechaCancelacion?: string | null;
-  sucursalNombre?: string;
-};
 
-type DetalleLinea = {
-  idLinea: number;
-  nombreMedicamento: string;
-  presentacion: string;
-  cantidad: number;
-};
-
-const MOCK_RECETAS: Receta[] = [
-  {
-    idReceta: 1,
-    nombre: 'Receta para dolor de cabeza',
-    estado: 'SURTIDA',
-    fechaLimiteRecogida: '2025-11-30',
-    fechaCancelacion: null,
-    fechaCreacion: '2025-11-20',
-    sucursalNombre: 'Farmacia Centro',
-  },
-  {
-    idReceta: 2,
-    nombre: 'Receta controlada',
-    estado: 'SURTIÉNDOSE',
-    fechaLimiteRecogida: '2025-12-05',
-    fechaCancelacion: null,
-    fechaCreacion: '2025-11-25',
-    sucursalNombre: 'Farmacia Norte',
-  },
-  {
-    idReceta: 3,
-    nombre: 'Receta antibiótico',
-    estado: 'CANCELADA',
-    fechaLimiteRecogida: '2025-11-10',
-    fechaCancelacion: '2025-11-09',
-    fechaCreacion: '2025-11-05',
-    sucursalNombre: 'Farmacia Sur',
-  },
-];
-
-const MOCK_DETALLES: DetalleLinea[] = [
-  {
-    idLinea: 1,
-    nombreMedicamento: 'Paracetamol 500mg',
-    presentacion: 'Caja 10 tabletas',
-    cantidad: 2,
-  },
-  {
-    idLinea: 2,
-    nombreMedicamento: 'Ibuprofeno 400mg',
-    presentacion: 'Caja 20 tabletas',
-    cantidad: 1,
-  },
-];
 
 export default function DetalleRecetaScreen() {
   const { colorScheme } = useColorScheme();
   const isDark = colorScheme === 'dark';
   const params = useLocalSearchParams<{
     index?: string;
+    recetas?: string;
   }>();
+
+  const recetas = React.useMemo(() => {
+    try {
+      return params.recetas ? JSON.parse(params.recetas) as Receta[] : [];
+    } catch (e) {
+      console.error('Error parsing recetas:', e);
+      return [];
+    }
+  }, [params.recetas]);
 
   const initialIndex = React.useMemo(() => {
     const parsed = Number(params.index ?? 0);
     if (Number.isNaN(parsed)) return 0;
     if (parsed < 0) return 0;
-    if (parsed >= MOCK_RECETAS.length) return MOCK_RECETAS.length - 1;
+    if (parsed >= recetas.length) return recetas.length - 1;
     return parsed;
-  }, [params.index]);
+  }, [params.index, recetas.length]);
 
   const [currentIndex, setCurrentIndex] = React.useState(initialIndex);
 
-  const receta = MOCK_RECETAS[currentIndex];
+  React.useEffect(() => {
+    setCurrentIndex(initialIndex);
+  }, [initialIndex]);
 
-  const renderDetalle = ({ item }: { item: DetalleLinea }) => (
+  if (recetas.length === 0) {
+    return (
+      <View className="flex-1 items-center justify-center bg-zinc-50 px-6 dark:bg-black">
+        <Text className="text-center text-zinc-500 dark:text-zinc-400">
+          No hay recetas disponibles
+        </Text>
+      </View>
+    );
+  }
+
+  const receta = recetas[currentIndex];
+
+  const renderDetalle = ({ item }: { item: any }) => (
     <View className="mb-2 rounded-xl bg-white/95 p-3 shadow-sm dark:bg-zinc-900/95">
-      <Text className="font-semibold">{item.nombreMedicamento}</Text>
+      <Text className="font-semibold">{item.medicamento?.nombre || 'Sin nombre'}</Text>
       <Text className="text-xs text-zinc-500 dark:text-zinc-400">
-        {item.presentacion}
+        {item.medicamento?.presentacion || 'N/A'}
       </Text>
       <Text className="mt-1 text-sm">
-        Cantidad: <Text className="font-medium">{item.cantidad}</Text>
+        Cantidad: <Text className="font-medium">{item.cantidad || 0}</Text>
       </Text>
+      {item.medicamento?.esControlado && (
+        <Text className="mt-1 text-xs font-medium text-orange-600 dark:text-orange-400">
+          ⚠️ Medicamento controlado
+        </Text>
+      )}
     </View>
   );
 
+  const formatDate = (date?: string | Date) => {
+    if (!date) return 'N/A';
+    const d = typeof date === 'string' ? new Date(date) : date;
+    return d.toLocaleDateString('es-ES', { year: 'numeric', month: '2-digit', day: '2-digit' });
+  };
+
   const canGoPrev = currentIndex > 0;
-  const canGoNext = currentIndex < MOCK_RECETAS.length - 1;
+  const canGoNext = currentIndex < recetas.length - 1;
 
   const handlePrev = () => {
     if (!canGoPrev) return;
@@ -124,28 +100,52 @@ export default function DetalleRecetaScreen() {
 
       <View className="flex-1 bg-zinc-50 px-4 pb-6 pt-24 dark:bg-black">
         <View className="mb-4 rounded-2xl bg-white/95 p-4 shadow-sm dark:bg-zinc-900/95">
-          <Text className="text-lg font-semibold">{receta.nombre}</Text>
-          <Text className="mt-1 text-sm text-zinc-600 dark:text-zinc-300">
-            Estado: <Text className="font-medium">{receta.estado}</Text>
+          <Text className="text-lg font-semibold">
+            {receta.nombre || `Receta #${receta.idReceta}`}
           </Text>
-
-          {receta.sucursalNombre && (
-            <Text className="text-sm text-zinc-600 dark:text-zinc-300">
-              Sucursal:{' '}
-              <Text className="font-medium">{receta.sucursalNombre}</Text>
+          {receta.estado && (
+            <Text className="mt-1 text-sm text-zinc-600 dark:text-zinc-300">
+              Estado: <Text className="font-medium">{receta.estado}</Text>
             </Text>
           )}
 
-          <Text className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-            Creada el {receta.fechaCreacion}
-          </Text>
-          <Text className="text-xs text-zinc-500 dark:text-zinc-400">
-            Límite de recogida: {receta.fechaLimiteRecogida}
-          </Text>
+          {receta.sucursalRecogida && (
+              <View className="text-zinc-600 dark:text-zinc-300">
+                <Text style={{ fontSize: 14 }}>
+                  Sucursal: <Text className="font-medium">{receta.sucursalRecogida.nombre}</Text>
+                </Text>
+    
+                <Text style={{ fontSize: 14}}>
+                  Dirección: <Text className="font-medium">{receta.sucursalRecogida.direccion}</Text>
+                </Text>
+    
+                <Text style={{ fontSize: 14 }}>
+                  Teléfono: <Text className="font-medium">{receta.sucursalRecogida.telefono}</Text>
+                </Text>
+              </View>
+          )}
+
+          {receta.fechaLimiteRecogida && (
+            <Text className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+              Límite de recogida: {formatDate(receta.fechaLimiteRecogida)}
+            </Text>
+          )}
 
           {receta.fechaCancelacion && (
             <Text className="mt-1 text-xs text-red-500">
-              Cancelada el {receta.fechaCancelacion}
+              Cancelada el {formatDate(receta.fechaCancelacion)}
+            </Text>
+          )}
+
+          {receta.pago && (
+            <Text className="mt-2 text-sm font-medium text-zinc-700 dark:text-zinc-200">
+              Total: ${receta.pago.monto.toFixed(2)}
+            </Text>
+          )}
+
+          {receta.UsuarioCreador && (
+            <Text className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+              Creado por: {receta.UsuarioCreador.name}
             </Text>
           )}
         </View>
@@ -154,12 +154,20 @@ export default function DetalleRecetaScreen() {
           Medicamentos de la receta
         </Text>
 
-        <FlatList
-          data={MOCK_DETALLES}
-          keyExtractor={(item) => item.idLinea.toString()}
-          renderItem={renderDetalle}
-          contentContainerStyle={{ paddingBottom: 16 }}
-        />
+        {receta.lineas && receta.lineas.length > 0 ? (
+          <FlatList
+            data={receta.lineas}
+            keyExtractor={(item, idx) => `linea-${idx}`}
+            renderItem={renderDetalle}
+            contentContainerStyle={{ paddingBottom: 16 }}
+          />
+        ) : (
+          <View className="flex-1 items-center justify-center">
+            <Text className="text-zinc-500 dark:text-zinc-400">
+              No hay medicamentos en esta receta
+            </Text>
+          </View>
+        )}
 
         <View className="mt-4 flex-row justify-between gap-3">
           <Button
