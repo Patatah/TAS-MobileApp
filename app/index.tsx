@@ -16,16 +16,37 @@ export default function LoginScreen() {
   const { colorScheme } = useColorScheme();
   const isDark = colorScheme === 'dark';
   const router = useRouter();
-  const { login, loading, error } = useAuth();
+  const { login, loading, error, checkToken, isCheckingToken } = useAuth();
 
   const [email, setEmail] = React.useState('');
   const [password, setPassword] = React.useState('');
+
+  React.useEffect(() => {
+    const verifyToken = async () => {
+      const hasToken = await checkToken();
+      if (hasToken) {
+        router.replace('/mis-recetas');
+      }
+    };
+    verifyToken();
+  }, []);
 
   const handleLogin = async () => {
     const success = await login({ email, password });
     if (success) {
       router.replace('/mis-recetas');
     }
+  };
+
+  if (isCheckingToken) {
+    return (
+      <View className="flex-1 items-center justify-center bg-zinc-50 dark:bg-black">
+        <ActivityIndicator size="large" color={isDark ? '#e5e7eb' : '#3f3f46'} />
+        <Text className="mt-4 text-sm text-zinc-500 dark:text-zinc-400">
+          Verificando sesión...
+        </Text>
+      </View>
+    );
   };
 
   return (
@@ -58,7 +79,9 @@ export default function LoginScreen() {
               value={email}
               onChangeText={setEmail}
               autoCapitalize="none"
+              autoCorrect={false}
               keyboardType="email-address"
+              textContentType="emailAddress"
               className="rounded-2xl border border-zinc-200 bg-white px-3 py-2.5 text-sm text-zinc-900 shadow-sm dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100"
               placeholderTextColor={isDark ? '#71717A' : '#A1A1AA'}
             />
@@ -72,6 +95,9 @@ export default function LoginScreen() {
               value={password}
               onChangeText={setPassword}
               secureTextEntry
+              autoCapitalize="none"
+              autoCorrect={false}
+              textContentType="password"
               className="rounded-2xl border border-zinc-200 bg-white px-3 py-2.5 text-sm text-zinc-900 shadow-sm dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100"
               placeholder="••••••••"
               placeholderTextColor={isDark ? '#71717A' : '#A1A1AA'}
@@ -84,21 +110,26 @@ export default function LoginScreen() {
             </Text>
           )}
 
-          <Button className="mt-3 w-full rounded-2xl" onPress={handleLogin}>
-            <Text
-              className={
-                'text-sm font-medium ' +
-                (isDark ? 'text-zinc-900' : 'text-white')
-              }
-            >
-              Iniciar sesión
-            </Text>
+          <Button className="mt-3 w-full rounded-2xl" onPress={handleLogin} disabled={loading}>
+            {loading ? (
+              <ActivityIndicator color={isDark ? '#18181B' : '#FFFFFF'} />
+            ) : (
+              <Text
+                className={
+                  'text-sm font-medium ' +
+                  (isDark ? 'text-zinc-900' : 'text-white')
+                }
+              >
+                Iniciar sesión
+              </Text>
+            )}
           </Button>
 
           <Text className="mt-3 text-[10px] text-zinc-400 dark:text-zinc-500">
             Tus datos se usan solo para gestionar tus recetas en TAS.
           </Text>
         </View>
+      
       </View>
     </>
   );

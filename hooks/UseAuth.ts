@@ -5,7 +5,8 @@ import * as SecureStore from 'expo-secure-store';
 
 
 // URL DE API LARAVEL
-const API_URL = 'http://192.168.1.150:8000/api/login';
+const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.150:8000/api';
+const LOGIN_URL = `${API_BASE_URL}/login`;
 
 interface LoginCredentials {
   email: string;
@@ -26,6 +27,24 @@ export function useAuth() {
   const [error, setError] = useState<string | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [user, setUser] = useState<LoginResponse['user'] | null>(null);
+  const [isCheckingToken, setIsCheckingToken] = useState(true);
+
+  const checkToken = async (): Promise<boolean> => {
+    try {
+      const storedToken = await SecureStore.getItemAsync('api_token');
+      if (storedToken) {
+        setToken(storedToken);
+        setIsCheckingToken(false);
+        return true;
+      }
+      setIsCheckingToken(false);
+      return false;
+    } catch (e) {
+      console.error('Error checking token:', e);
+      setIsCheckingToken(false);
+      return false;
+    }
+  };
 
   const login = async ({ email, password }: LoginCredentials): Promise<boolean> => {
     if (!email || !password) {
@@ -37,7 +56,7 @@ export function useAuth() {
     setError(null);
 
     try {
-      const response = await fetch(API_URL, {
+      const response = await fetch(LOGIN_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -87,10 +106,12 @@ export function useAuth() {
   return {
     login,
     logout,
+    checkToken,
     loading,
     error,
     token,
     user,
     isAuthenticated: !!token,
+    isCheckingToken,
   };
 }

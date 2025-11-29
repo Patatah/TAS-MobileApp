@@ -2,6 +2,8 @@ import { Button } from '@/components/ui/button';
 import { Text } from '@/components/ui/text';
 import ThemeToggle from '@/components/ui/ThemeToggle';
 import { useAuth } from '@/hooks/UseAuth';
+import { useRecetas } from '@/hooks/useRecetas';
+import { Receta } from '@/hooks/tipos';
 import { Stack, useRouter } from 'expo-router';
 import { useColorScheme } from 'nativewind';
 import * as React from 'react';
@@ -10,51 +12,11 @@ import {
   FlatList,
   TouchableOpacity,
   TextInput,
+  ActivityIndicator,
+  RefreshControl,
 } from 'react-native';
 
-type Receta = {
-  idReceta: number;
-  nombre: string;
-  cedulaDoctor: string;
-  estado: string;
-  fechaLimiteRecogida: string;
-  fechaCancelacion?: string | null;
-  fechaCreacion: string;
-  sucursalNombre?: string;
-};
 
-const MOCK_RECETAS: Receta[] = [
-  {
-    idReceta: 1,
-    nombre: 'Receta para dolor de cabeza',
-    cedulaDoctor: 'ABC123',
-    estado: 'SURTIDA',
-    fechaLimiteRecogida: '2025-11-30',
-    fechaCancelacion: null,
-    fechaCreacion: '2025-11-20',
-    sucursalNombre: 'Farmacia Centro',
-  },
-  {
-    idReceta: 2,
-    nombre: 'Receta controlada',
-    cedulaDoctor: 'DEF456',
-    estado: 'SURTIÉNDOSE',
-    fechaLimiteRecogida: '2025-12-05',
-    fechaCancelacion: null,
-    fechaCreacion: '2025-11-25',
-    sucursalNombre: 'Farmacia Norte',
-  },
-  {
-    idReceta: 3,
-    nombre: 'Receta antibiótico',
-    cedulaDoctor: 'GHI789',
-    estado: 'CANCELADA',
-    fechaLimiteRecogida: '2025-11-10',
-    fechaCancelacion: '2025-11-09',
-    fechaCreacion: '2025-11-05',
-    sucursalNombre: 'Farmacia Sur',
-  },
-];
 
 export default function MisRecetasScreen() {
   const {logout} = useAuth();
@@ -64,6 +26,8 @@ export default function MisRecetasScreen() {
 
   const [search, setSearch] = React.useState('');
   const [fontScale, setFontScale] = React.useState(1);
+
+  const { recetas, refetch, loading, error} = useRecetas();
 
   const handleIncreaseFont = () => {
     setFontScale((prev) => {
@@ -78,13 +42,12 @@ export default function MisRecetasScreen() {
       pathname: '/detalle-receta',
       params: {
         index: index.toString(),
-        idReceta: item.idReceta.toString(),
-        nombre: item.nombre,
-        estado: item.estado,
-        fechaCreacion: item.fechaCreacion,
-        fechaLimiteRecogida: item.fechaLimiteRecogida,
-        fechaCancelacion: item.fechaCancelacion ?? '',
-        sucursalNombre: item.sucursalNombre ?? '',
+        idReceta: item.idReceta?.toString() ?? '',
+        nombre: item.nombre ?? 'Sin nombre',
+        estado: item.estado ?? 'DESCONOCIDO',
+        fechaLimiteRecogida: item.fechaLimiteRecogida?.toString() ?? '',
+        fechaCancelacion: item.fechaCancelacion?.toString() ?? '',
+        sucursalNombre: item.sucursalRecogida?.nombre ?? '',
       },
     });
   };
@@ -94,72 +57,87 @@ export default function MisRecetasScreen() {
     router.replace('/');
   };
 
-  const renderItem = ({ item, index }: { item: Receta; index: number }) => (
-    <TouchableOpacity
-      className="mb-3 rounded-2xl bg-white/95 p-4 shadow-sm dark:bg-zinc-900/95"
-      onPress={() => handlePressReceta(item, index)}
-    >
-      <View className="mb-1 flex-row items-center justify-between">
-        <Text
-          className="font-semibold"
-          style={{ fontSize: 16 * fontScale }}
-        >
-          {item.nombre}
-        </Text>
-        <View className="rounded-full bg-emerald-100 px-3 py-1 dark:bg-emerald-900/40">
+  const renderItem = ({ item, index }: { item: Receta; index: number }) => {
+    const formatDate = (date?: string | Date) => {
+      if (!date) return 'N/A';
+      const d = typeof date === 'string' ? new Date(date) : date;
+      return d.toLocaleDateString('es-ES', { year: 'numeric', month: '2-digit', day: '2-digit' });
+    };
+
+    return (
+      <TouchableOpacity
+        className="mb-3 rounded-2xl bg-white/95 p-4 shadow-sm dark:bg-zinc-900/95"
+        onPress={() => handlePressReceta(item, index)}
+      >
+        <View className="mb-1 flex-row items-center justify-between">
           <Text
-            className="font-medium text-emerald-700 dark:text-emerald-200"
-            style={{ fontSize: 11 * fontScale }}
+            className="flex-1 font-semibold"
+            style={{ fontSize: 16 * fontScale }}
           >
-            {item.estado}
+            {item.nombre || `Receta #${item.idReceta}`}
           </Text>
+          {item.estado && (
+            <View className="rounded-full bg-emerald-100 px-3 py-1 dark:bg-emerald-900/40">
+              <Text
+                className="font-medium text-emerald-700 dark:text-emerald-200"
+                style={{ fontSize: 11 * fontScale }}
+              >
+                {item.estado}
+              </Text>
+            </View>
+          )}
         </View>
-      </View>
 
-      {item.sucursalNombre && (
-        <Text
-          className="text-zinc-600 dark:text-zinc-300"
-          style={{ fontSize: 14 * fontScale }}
-        >
-          Sucursal:{' '}
-          <Text className="font-medium" style={{ fontSize: 14 * fontScale }}>
-            {item.sucursalNombre}
+        {item.sucursalRecogida && (
+          <Text
+            className="text-zinc-600 dark:text-zinc-300"
+            style={{ fontSize: 14 * fontScale }}
+          >
+            Sucursal:{' '}
+            <Text className="font-medium" style={{ fontSize: 14 * fontScale }}>
+              {item.sucursalRecogida.nombre}
+            </Text>
           </Text>
-        </Text>
-      )}
+        )}
 
-      <Text
-        className="mt-1 text-zinc-500 dark:text-zinc-400"
-        style={{ fontSize: 12 * fontScale }}
-      >
-        Creada el {item.fechaCreacion}
-      </Text>
-      <Text
-        className="text-zinc-500 dark:text-zinc-400"
-        style={{ fontSize: 12 * fontScale }}
-      >
-        Límite de recogida: {item.fechaLimiteRecogida}
-      </Text>
+        {item.fechaLimiteRecogida && (
+          <Text
+            className="mt-1 text-zinc-500 dark:text-zinc-400"
+            style={{ fontSize: 12 * fontScale }}
+          >
+            Límite de recogida: {formatDate(item.fechaLimiteRecogida)}
+          </Text>
+        )}
 
-      {item.fechaCancelacion && (
-        <Text
-          className="mt-1 text-red-500"
-          style={{ fontSize: 12 * fontScale }}
-        >
-          Cancelada el {item.fechaCancelacion}
-        </Text>
-      )}
-    </TouchableOpacity>
-  );
+        {item.fechaCancelacion && (
+          <Text
+            className="mt-1 text-red-500"
+            style={{ fontSize: 12 * fontScale }}
+          >
+            Cancelada el {formatDate(item.fechaCancelacion)}
+          </Text>
+        )}
+
+        {item.pago && (
+          <Text
+            className="mt-1 text-zinc-600 dark:text-zinc-300"
+            style={{ fontSize: 12 * fontScale }}
+          >
+            Monto: ${item.pago.monto.toFixed(2)}
+          </Text>
+        )}
+      </TouchableOpacity>
+    );
+  };
 
   const filteredRecetas = React.useMemo(() => {
     const term = search.trim().toLowerCase();
-    if (!term) return MOCK_RECETAS;
+    if (!term) return recetas;
 
-    return MOCK_RECETAS.filter((r) => {
-      const nombre = r.nombre.toLowerCase();
-      const estado = r.estado.toLowerCase();
-      const sucursal = (r.sucursalNombre ?? '').toLowerCase();
+    return recetas.filter((r) => {
+      const nombre = (r.nombre ?? '').toLowerCase();
+      const estado = (r.estado ?? '').toLowerCase();
+      const sucursal = (r.sucursalRecogida?.nombre ?? '').toLowerCase();
 
       return (
         nombre.includes(term) ||
@@ -167,7 +145,7 @@ export default function MisRecetasScreen() {
         sucursal.includes(term)
       );
     });
-  }, [search]);
+  }, [search, recetas]);
 
   return (
     <>
@@ -223,12 +201,34 @@ export default function MisRecetasScreen() {
             />
           </View>
 
-          <FlatList
-            data={filteredRecetas}
-            keyExtractor={(item) => item.idReceta.toString()}
-            renderItem={renderItem}
-            contentContainerStyle={{ paddingBottom: 16 }}
-          />
+          {loading ? (
+            <View className="flex-1 items-center justify-center">
+              <ActivityIndicator size="large" color={isDark ? '#e5e7eb' : '#3f3f46'} />
+              <Text className="mt-2 text-zinc-500 dark:text-zinc-400" style={{ fontSize: 14 * fontScale }}>
+                Cargando recetas...
+              </Text>
+            </View>
+          ) : error ? (
+            <View className="flex-1 items-center justify-center">
+              <Text className="text-red-500" style={{ fontSize: 14 * fontScale }}>
+                Error: {error}
+              </Text>
+            </View>
+          ) : filteredRecetas.length === 0 ? (
+            <View className="flex-1 items-center justify-center">
+              <Text className="text-zinc-500 dark:text-zinc-400" style={{ fontSize: 14 * fontScale }}>
+                No se encontraron recetas
+              </Text>
+            </View>
+          ) : (
+            <FlatList
+              data={filteredRecetas}
+              refreshControl={<RefreshControl refreshing={loading} onRefresh={refetch} />}
+              keyExtractor={(item, idx) => item.idReceta?.toString() ?? idx.toString()}
+              renderItem={renderItem}
+              contentContainerStyle={{ paddingBottom: 16 }}
+            />
+          )}
         </View>
 
         <Button
