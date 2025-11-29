@@ -91,7 +91,8 @@ export default function MisRecetasScreen() {
 
     return (
       <TouchableOpacity
-        className="mb-3 rounded-2xl bg-white/95 p-4 shadow-sm dark:bg-zinc-900/95"
+        className="mb-3 rounded-2xl bg-white/95 p-4 shadow-sm dark:bg-zinc-900/99 border-slate-300"
+        style={{borderWidth: 1.2}}
         onPress={() => handlePressReceta(item, index)}>
         <View className="mb-1 flex-row items-center justify-between">
           <Text className="flex-1 font-semibold" style={{ fontSize: 16 * fontScale }}>
@@ -237,6 +238,7 @@ export default function MisRecetasScreen() {
           ) : (
             <FlatList
               data={filteredRecetas}
+              showsVerticalScrollIndicator={false}
               refreshControl={<RefreshControl refreshing={loading} onRefresh={refetch} />}
               keyExtractor={(item, idx) => item.idReceta?.toString() ?? idx.toString()}
               renderItem={renderItem}
