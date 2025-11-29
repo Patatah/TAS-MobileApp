@@ -1,6 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { Text } from '@/components/ui/text';
 import ThemeToggle from '@/components/ui/ThemeToggle';
+import { useAuth } from '@/hooks/UseAuth';
 import { Stack, useRouter } from 'expo-router';
 import { useColorScheme } from 'nativewind';
 import * as React from 'react';
@@ -56,6 +57,7 @@ const MOCK_RECETAS: Receta[] = [
 ];
 
 export default function MisRecetasScreen() {
+  const {logout} = useAuth();
   const { colorScheme } = useColorScheme();
   const isDark = colorScheme === 'dark';
   const router = useRouter();
@@ -88,6 +90,7 @@ export default function MisRecetasScreen() {
   };
 
   const handleCerrarSesion = () => {
+    logout();
     router.replace('/');
   };
 
