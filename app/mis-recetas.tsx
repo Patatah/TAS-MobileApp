@@ -15,7 +15,7 @@ import {
   ActivityIndicator,
   RefreshControl,
 } from 'react-native';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const getColorEstado = (estado: string) => {
@@ -54,8 +54,8 @@ export default function MisRecetasScreen() {
   const isDark = colorScheme === 'dark';
   const router = useRouter();
 
-  const [search, setSearch] = React.useState('');
-  const [fontScale, setFontScale] = React.useState(1);
+  const [search, setSearch] = useState('');
+  const [fontScale, setFontScale] = useState(1);
 
   const { recetas, refetch, loading, error } = useRecetas();
 

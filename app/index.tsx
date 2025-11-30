@@ -6,6 +6,7 @@ import { useAuth } from '@/hooks/UseAuth';
 import { Stack, useRouter } from 'expo-router';
 import { useColorScheme } from 'nativewind';
 import * as React from 'react';
+import { useEffect, useState } from 'react';
 import { View, TextInput, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -19,10 +20,10 @@ export default function LoginScreen() {
   const router = useRouter();
   const { login, loading, error, checkToken, isCheckingToken } = useAuth();
 
-  const [email, setEmail] = React.useState('');
-  const [password, setPassword] = React.useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
 
-  React.useEffect(() => {
+  useEffect(() => {
     const verifyToken = async () => {
       const hasToken = await checkToken();
       if (hasToken) {
